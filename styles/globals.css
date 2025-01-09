@@ -11,3 +11,28 @@
   animation: scroll 20s linear infinite;
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+body {
+  @apply bg-gradient-to-b from-[#4A90E2] to-[#1E3A8A] min-h-screen;
+}
+
+.checkbox:checked {
+  @apply bg-green-500 border-green-500;
+}
+
+.checkbox:checked + label {
+  @apply text-green-500;
+}
+

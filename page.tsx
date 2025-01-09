@@ -1,75 +1,87 @@
-import { Search } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { Search, Share } from 'lucide-react'
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import PokemonCard from "./pokemon-card"
+import { Card, CheckType } from './types/card'
+import { cards } from '@/components/cards'
+import Header from '@/components/header'
 
 export default function HuddlePage() {
-  const cards = [
-    { id: "001", name: "Card 1", image: "/placeholder.svg?height=120&width=120" },
-    { id: "002", name: "Card 2", image: "/placeholder.svg?height=120&width=120" },
-    { id: "003", name: "Card 3", image: "/placeholder.svg?height=120&width=120" },
-    { id: "004", name: "Card 4", image: "/placeholder.svg?height=120&width=120" },
-    { id: "005", name: "Card 5", image: "/placeholder.svg?height=120&width=120" },
-    { id: "006", name: "Card 6", image: "/placeholder.svg?height=120&width=120" },
-    { id: "007", name: "Card 7", image: "/placeholder.svg?height=120&width=120" },
-    { id: "008", name: "Card 8", image: "/placeholder.svg?height=120&width=120" },
-    { id: "009", name: "Card 9", image: "/placeholder.svg?height=120&width=120" },
-    { id: "010", name: "Card 10", image: "/placeholder.svg?height=120&width=120" },
-  ]
+  const [cardData, setCardData] = useState<Card[]>(cards)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [activeTab, setActiveTab] = useState('all')
+
+  const filteredCards = cardData.filter(card => 
+    card.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (activeTab === 'all' || 
+     (activeTab === 'collected' && Object.values(card.checks).some(Boolean)) || 
+     (activeTab === 'needed' && Object.values(card.checks).some(check => !check)))
+  )
+
+  const toggleCardCheck = (id: string, checkType: CheckType) => {
+    setCardData(cardData.map(card => 
+      card.id === id 
+        ? { ...card, checks: { ...card.checks, [checkType]: !card.checks[checkType] } } 
+        : card
+    ))
+  }
 
   return (
-    <div className="min-h-screen bg-[#4A90E2]">
-      {/* Banner */}
-      <div className="bg-[#1a1a1a] text-white overflow-hidden">
-        <div className="animate-scroll flex whitespace-nowrap py-2">
-          {Array(7).fill("$PENGU NOW LIVE").map((text, i) => (
-            <span key={i} className="mx-4 text-lg font-bold">{text}</span>
-          ))}
+    <div>
+      <Header />
+      <div className="min-h-screen bg-white p-4">
+        <div className="max-w-2xl mx-auto relative">
+          <Share className="absolute top-4 right-4 cursor-pointer" />
+          
+          <div className="pb-4 flex items-center">
+            <img 
+              src="https://pbs.twimg.com/profile_images/1876724785264345088/W2F8RoP__400x400.jpg" 
+              alt="Profile" 
+              className="w-24 h-24 rounded-full mb-4 mr-4"
+            />
+            <div>
+              <h2 className="text-xl font-bold">Akhil</h2>
+              <p className="text-gray-500">@akhil_bvs</p>
+              <p className="text-gray-400">0xb80d...df95</p>
+            </div>
+          </div>
+          
+          {/* Tabs */}
+          <div className="sticky top-0 bg-white p-4">
+            <Tabs defaultValue="all" className="w-full mb-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all" onClick={() => setActiveTab('all')}>All</TabsTrigger>
+                <TabsTrigger value="collected" onClick={() => setActiveTab('collected')}>Collected</TabsTrigger>
+                <TabsTrigger value="needed" onClick={() => setActiveTab('needed')}>Needed</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <div className="mb-4">
+              <input 
+                type="text" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                placeholder="Search cards..." 
+                className="w-full p-2 border border-gray-300 rounded-md"
+              />
+            </div>
+          </div>
+
+          {/* Checklist */}
+          <div className="space-y-2">
+            {filteredCards.map((card) => (
+              <PokemonCard 
+                key={card.id} 
+                {...card} 
+                onToggle={toggleCardCheck}
+              />
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* Header */}
-      <header className="container mx-auto px-4 py-6 flex justify-between items-center">
-        <button className="bg-[#8BB8F8] px-8 py-2 rounded-lg text-white font-bold border-2 border-black">
-          MENU
-        </button>
-        <div className="w-16 h-16">
-          <img 
-            src="/placeholder.svg?height=64&width=64" 
-            alt="Igloo Logo"
-            className="w-full h-full object-contain"
-          />
-        </div>
-        <button className="bg-[#8BB8F8] px-8 py-2 rounded-lg text-white font-bold border-2 border-black">
-          BUY $PENGU
-        </button>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-6xl font-bold text-white text-center mb-8 drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-          THE HUDDLE
-        </h1>
-        
-        <p className="text-white text-center mb-12 text-xl max-w-3xl mx-auto drop-shadow-[1px_1px_0px_rgba(0,0,0,1)]">
-          PUDGY PENGUINS IS A GLOBAL IP FOCUSED ON PROLIFERATING THE PENGUIN, MEMETIC CULTURE, AND GOOD VIBES.
-        </p>
-
-        {/* Search Bar */}
-        <div className="relative w-full max-w-md mx-auto mb-12">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-          <Input
-            className="w-full bg-white/90 pl-9 placeholder:text-gray-500 border-2 border-black"
-            placeholder="Search by Card Name..."
-          />
-        </div>
-
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {cards.map((card) => (
-            <PokemonCard key={card.id} {...card} />
-          ))}
-        </div>
-      </main>
     </div>
   )
 }
