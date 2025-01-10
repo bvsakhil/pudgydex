@@ -1,6 +1,4 @@
-import { Card } from './types/card'; // Adjust the import path as necessary
-
-export const cards: Card[] = [
+export const cardData = [
     { id: "001", name: "Contemplation Penguin", checks: { nonfoil: false, foil: false, sketch: false } },
     { id: "002", name: "Bamboo Penguin", checks: { nonfoil: false, foil: false, sketch: false } },
     { id: "003", name: "Carnival Penguin", checks: { nonfoil: false, foil: false, sketch: false } },
@@ -204,4 +202,4 @@ export const cards: Card[] = [
     { id: "201", name: "Barrel Hijacketes", checks: { nonfoil: false, foil: false, sketch: false } },
     { id: "202", name: "Promo/Gift code", checks: { nonfoil: false, foil: false, sketch: false } },
     { id: "203", name: "Promo/Gift code", checks: { nonfoil: false, foil: false, sketch: false } },
-];
+]

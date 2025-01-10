@@ -1,86 +1,209 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Share } from 'lucide-react'
+import { Search, Share2, Copy, Check } from 'lucide-react'
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import PokemonCard from "./pokemon-card"
 import { Card, CheckType } from './types/card'
-import { cards } from '@/components/cards'
-import Header from '@/components/header'
+import { cardData } from "@/components/cards"
 
 export default function HuddlePage() {
-  const [cardData, setCardData] = useState<Card[]>(cards)
+  const [cards, setCards] = useState<Card[]>(cardData)
+
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('all')
+  const [copied, setCopied] = useState(false)
 
-  const filteredCards = cardData.filter(card => 
+  const filteredCards = cards.filter(card => 
     card.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (activeTab === 'all' || 
      (activeTab === 'collected' && Object.values(card.checks).some(Boolean)) || 
      (activeTab === 'needed' && Object.values(card.checks).some(check => !check)))
   )
 
+  const collectedCount = cards.filter(card => Object.values(card.checks).some(Boolean)).length
+
+  const neededCount = cards.filter(card => 
+    !Object.values(card.checks).some(Boolean)
+  ).length;
+
   const toggleCardCheck = (id: string, checkType: CheckType) => {
-    setCardData(cardData.map(card => 
+    setCards(prevCards => prevCards.map(card => 
       card.id === id 
         ? { ...card, checks: { ...card.checks, [checkType]: !card.checks[checkType] } } 
         : card
     ))
   }
 
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText('0xb80d...df95')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
-    <div>
-      <Header />
-      <div className="min-h-screen bg-white p-4">
-        <div className="max-w-2xl mx-auto relative">
-          <Share className="absolute top-4 right-4 cursor-pointer" />
-          
-          <div className="pb-4 flex items-center">
-            <img 
-              src="https://pbs.twimg.com/profile_images/1876724785264345088/W2F8RoP__400x400.jpg" 
-              alt="Profile" 
-              className="w-24 h-24 rounded-full mb-4 mr-4"
-            />
+    <div className="min-h-screen bg-gradient-to-b from-[#E5F0FF] to-white">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-black text-center sm:text-left">
+             PudgyDex
+          </h1>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              className="font-medium text-sm"
+            >
+              Buy Vibes
+            </Button>
+            <Button 
+              className="bg-[#b0def2] hover:bg-[#a0cee2]/90 text-black font-medium text-sm"
+            >
+              Connect Pengu
+            </Button>
+          </div>
+        </nav>
+      </header>
+
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
+        {/* Profile */}
+        <div className="flex items-center justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 rounded-xl">
+              <AvatarImage src="https://pbs.twimg.com/profile_images/1876724785264345088/W2F8RoP__400x400.jpg" />
+              <AvatarFallback>AP</AvatarFallback>
+            </Avatar>
             <div>
-              <h2 className="text-xl font-bold">Akhil</h2>
-              <p className="text-gray-500">@akhil_bvs</p>
-              <p className="text-gray-400">0xb80d...df95</p>
+              
+              <p className="text-gray-500 font-medium">@akhil_bvs</p>
+              <div className="flex items-center gap-2">
+                <p className="text-gray-400 text-sm font-mono">0xb80d...df95</p>
+                <button 
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText('https://example.com') // Replace with your desired URL
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000); // Toast duration
+                      alert('Copied successfully!'); // Toast message
+                    } catch (err) {
+                      console.error('Failed to copy: ', err);
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-[#1E3A8A] font-medium text-sm mt-2">Vibes Collected: {collectedCount}</p>
             </div>
           </div>
-          
-          {/* Tabs */}
-          <div className="sticky top-0 bg-white p-4">
-            <Tabs defaultValue="all" className="w-full mb-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="all" onClick={() => setActiveTab('all')}>All</TabsTrigger>
-                <TabsTrigger value="collected" onClick={() => setActiveTab('collected')}>Collected</TabsTrigger>
-                <TabsTrigger value="needed" onClick={() => setActiveTab('needed')}>Needed</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <Button variant="outline" size="icon" className="text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+            <Share2 className="h-5 w-5" />
+          </Button>
+        </div>
 
-            <div className="mb-4">
-              <input 
-                type="text" 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-                placeholder="Search cards..." 
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
+        {/* Main Content Box */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Sticky Header */}
+          <div className="sticky top-0 bg-white border-b z-40">
+            {/* Tabs and Search */}
+            <div className="flex flex-col">
+              <div className="flex flex-wrap justify-between">
+                <button
+                  className={`px-4 sm:px-6 py-3 text-sm font-medium relative ${
+                    activeTab === 'all' ? 'text-[#1E3A8A]' : 'text-gray-400'
+                  }`}
+                  onClick={() => setActiveTab('all')}
+                >
+                  All ({cards.length})
+                  {activeTab === 'all' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
+                  )}
+                </button>
+                <button
+                  className={`px-4 sm:px-6 py-3 text-sm font-medium relative ${
+                    activeTab === 'collected' ? 'text-[#1E3A8A]' : 'text-gray-400'
+                  }`}
+                  onClick={() => setActiveTab('collected')}
+                >
+                  Collected ({collectedCount})
+                  {activeTab === 'collected' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
+                  )}
+                </button>
+                <button
+                  className={`px-4 sm:px-6 py-3 text-sm font-medium relative ${
+                    activeTab === 'needed' ? 'text-[#1E3A8A]' : 'text-gray-400'
+                  }`}
+                  onClick={() => setActiveTab('needed')}
+                >
+                  Needed ({neededCount})
+                  {activeTab === 'needed' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
+                  )}
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="p-4 bg-white">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    className="w-full pl-10 py-2 text-sm sm:text-base placeholder:text-gray-400 border rounded-xl"
+                    placeholder="Search cards by name or ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Card Types Legend - Simplified */}
+            <div className="px-4 py-3 flex flex-wrap items-center gap-4 text-sm border-t">
+              <span className="font-medium text-gray-600">Types:</span>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-white"></div>
+                  <span className="text-gray-600">Regular</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-yellow-50 to-yellow-100"></div>
+                  <span className="text-gray-600">Foil</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-blue-50 to-blue-100"></div>
+                  <span className="text-gray-600">Sketch</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Checklist */}
-          <div className="space-y-2">
-            {filteredCards.map((card) => (
-              <PokemonCard 
-                key={card.id} 
-                {...card} 
-                onToggle={toggleCardCheck}
-              />
-            ))}
+          <div className="p-4 sm:p-6">
+            {/* Checklist */}
+            <div className="space-y-1">
+                {activeTab === 'collected' && collectedCount === 0 ? (
+                    <div className="text-center text-gray-500">
+                        No cards collected yet. Start marking your cards to appear here.
+                    </div>
+                ) : (
+                    filteredCards.map((card) => (
+                        <PokemonCard 
+                            key={card.id} 
+                            {...card} 
+                            onToggle={toggleCardCheck}
+                        />
+                    ))
+                )}
+            </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="py-8 text-center text-sm text-gray-500">
+          Built by @akhil_bvs
+        </footer>
       </div>
     </div>
   )

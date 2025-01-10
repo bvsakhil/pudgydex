@@ -1,5 +1,6 @@
-import { Checkbox } from "@/components/ui/checkbox"
-import { Square, CircleSlash, Pencil } from 'lucide-react'
+'use client'
+
+import * as React from 'react'
 import { Card, CheckType } from './types/card'
 
 interface CardProps extends Card {
@@ -7,33 +8,40 @@ interface CardProps extends Card {
 }
 
 export default function PokemonCard({ id, name, checks, onToggle }: CardProps) {
+  const checkTypes = [
+    { type: 'nonfoil' as const, className: 'bg-white' },
+    { type: 'foil' as const, className: 'bg-gradient-to-br from-yellow-50 to-yellow-100' },
+    { type: 'sketch' as const, className: 'bg-gradient-to-br from-blue-50 to-blue-100' }
+  ]
+
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-      <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-500">#{id}</span>
-        <span className="text-lg font-medium text-gray-800">{name}</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <div className="flex items-center">
-          <Square className="h-4 w-4 mr-1" />
-          <Checkbox 
-            checked={checks.nonfoil}
-            onCheckedChange={() => onToggle(id, 'nonfoil')}
-          />
+    <div className="group relative">
+      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-[#E5F0FF] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      
+      <div className="relative flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 rounded-lg">
+        <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-0">
+          <span className="text-xs sm:text-sm text-gray-500 font-medium select-none">#{id}</span>
+          <span className="text-sm sm:text-base text-gray-900 font-medium select-none">{name}</span>
         </div>
-        <div className="flex items-center">
-          <CircleSlash className="h-4 w-4 mr-1" />
-          <Checkbox 
-            checked={checks.foil}
-            onCheckedChange={() => onToggle(id, 'foil')}
-          />
-        </div>
-        <div className="flex items-center">
-          <Pencil className="h-4 w-4 mr-1" />
-          <Checkbox 
-            checked={checks.sketch}
-            onCheckedChange={() => onToggle(id, 'sketch')}
-          />
+
+        <div className="flex items-center gap-2">
+          {checkTypes.map(({ type, className }) => (
+            <button
+              key={type}
+              onClick={() => onToggle(id, type)}
+              className={`
+                w-5 h-5 rounded-sm border border-gray-300 transition-all
+                ${checks[type] ? 'border-[#1E3A8A] ring-2 ring-[#1E3A8A]/20' : 'hover:border-gray-400'}
+                ${className}
+              `}
+            >
+              {checks[type] && (
+                <svg className="w-full h-full text-[#1E3A8A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          ))}
         </div>
       </div>
     </div>
