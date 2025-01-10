@@ -1,13 +1,19 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Share2, Copy, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, Share2, Copy, Check, ShareIcon } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import PokemonCard from "./pokemon-card"
 import { Card, CheckType } from './types/card'
 import { cardData } from "@/components/cards"
+import { ethers } from 'ethers'
+import { toast } from 'sonner'
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount } from 'wagmi'
+
+
 
 export default function HuddlePage() {
   const [cards, setCards] = useState<Card[]>(cardData)
@@ -15,6 +21,9 @@ export default function HuddlePage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [copied, setCopied] = useState(false)
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const [nftImage, setNftImage] = useState<string | null>(null)
+  const { address, isConnected } = useAccount()
 
   const filteredCards = cards.filter(card => 
     card.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -43,6 +52,12 @@ export default function HuddlePage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  
+
+  
+
+  
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E5F0FF] to-white">
       {/* Header */}
@@ -52,17 +67,15 @@ export default function HuddlePage() {
              PudgyDex
           </h1>
           <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              className="font-medium text-sm"
-            >
-              Buy Vibes
-            </Button>
-            <Button 
-              className="bg-[#b0def2] hover:bg-[#a0cee2]/90 text-black font-medium text-sm"
-            >
-              Connect Pengu
-            </Button>
+            <a href="https://www.vibes.game/where-to-buy" target="_blank" rel="noopener noreferrer">
+              <Button 
+                variant="outline"
+                className="font-medium text-sm"
+              >
+                Buy Vibes
+              </Button>
+            </a>
+            <ConnectButton chainStatus="none" showBalance={false} accountStatus="avatar" />
           </div>
         </nav>
       </header>
@@ -71,36 +84,49 @@ export default function HuddlePage() {
         {/* Profile */}
         <div className="flex items-center justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 rounded-xl">
+            <Avatar className="h-16 w-16 rounded-xl relative">
+              {nftImage && <img src={nftImage} alt="NFT" className="absolute inset-0 w-full h-full object-cover rounded-xl" />}
               <AvatarImage src="https://pbs.twimg.com/profile_images/1876724785264345088/W2F8RoP__400x400.jpg" />
               <AvatarFallback>AP</AvatarFallback>
             </Avatar>
             <div>
-              
-              <p className="text-gray-500 font-medium">@akhil_bvs</p>
+              <p className="text-gray-500 font-medium">{`${address?.substring(0, 4)}...${address?.substring(address.length - 4)}`}</p>
+              {walletAddress && <p className="text-gray-400 text-sm font-mono">{`${walletAddress?.substring(0, 4)}...${walletAddress?.substring(walletAddress.length - 4)}`}</p>}
               <div className="flex items-center gap-2">
-                <p className="text-gray-400 text-sm font-mono">0xb80d...df95</p>
+                <p className="text-gray-400 text-sm font-mono">{address}</p>
                 <button 
                   onClick={async () => {
                     try {
-                      await navigator.clipboard.writeText('https://example.com') // Replace with your desired URL
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000); // Toast duration
-                      alert('Copied successfully!'); // Toast message
+                      await navigator.clipboard.writeText('https://www.youtube.com/watch?v=jaherz_GHoI') // Replace with your desired URL
+                      toast.success('Link copied!'); // Toast message
                     } catch (err) {
                       console.error('Failed to copy: ', err);
                     }
                   }}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <Copy className="h-4 w-4" />
                 </button>
               </div>
               <p className="text-[#1E3A8A] font-medium text-sm mt-2">Vibes Collected: {collectedCount}</p>
             </div>
           </div>
-          <Button variant="outline" size="icon" className="text-gray-600 hover:text-gray-900 hover:bg-gray-50">
-            <Share2 className="h-5 w-5" />
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText('https://www.youtube.com/watch?v=jaherz_GHoI') // Replace with your desired URL
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000); // Toast duration
+                toast.success('Link copied!'); // Toast message
+              } catch (err) {
+                console.error('Failed to copy: ', err);
+              }
+            }}
+          >
+            {copied ? <Check className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
           </Button>
         </div>
 
@@ -110,9 +136,9 @@ export default function HuddlePage() {
           <div className="sticky top-0 bg-white border-b z-40">
             {/* Tabs and Search */}
             <div className="flex flex-col">
-              <div className="flex flex-wrap justify-between">
+              <div className="flex flex-wrap justify-center gap-4">
                 <button
-                  className={`px-4 sm:px-6 py-3 text-sm font-medium relative ${
+                  className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
                     activeTab === 'all' ? 'text-[#1E3A8A]' : 'text-gray-400'
                   }`}
                   onClick={() => setActiveTab('all')}
@@ -123,7 +149,7 @@ export default function HuddlePage() {
                   )}
                 </button>
                 <button
-                  className={`px-4 sm:px-6 py-3 text-sm font-medium relative ${
+                  className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
                     activeTab === 'collected' ? 'text-[#1E3A8A]' : 'text-gray-400'
                   }`}
                   onClick={() => setActiveTab('collected')}
@@ -134,7 +160,7 @@ export default function HuddlePage() {
                   )}
                 </button>
                 <button
-                  className={`px-4 sm:px-6 py-3 text-sm font-medium relative ${
+                  className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
                     activeTab === 'needed' ? 'text-[#1E3A8A]' : 'text-gray-400'
                   }`}
                   onClick={() => setActiveTab('needed')}
@@ -202,7 +228,7 @@ export default function HuddlePage() {
 
         {/* Footer */}
         <footer className="py-8 text-center text-sm text-gray-500">
-          Built by <a href="https://x.com/akhil_bvs" target="_blank" style="text-decoration: none;">@akhil_bvs</a>
+          Built by @akhil_bvs
         </footer>
       </div>
     </div>
