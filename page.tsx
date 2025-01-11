@@ -364,7 +364,7 @@ export default function HuddlePage() {
         {/* Main Content Box */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Sticky Header */}
-          <div className="bg-white border-b">
+          <div className="bg-white border-b sticky top-0">
             {/* Tabs and Search */}
             <div className="flex flex-col">
               <div className="flex flex-wrap justify-center gap-4">
@@ -413,6 +413,25 @@ export default function HuddlePage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
+                </div>
+              </div>
+
+              {/* Card Types Legend - Simplified */}
+              <div className="px-6 pb-4 flex items-center gap-6 text-sm">
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 border border-gray-300 rounded-sm bg-white"></div>
+                    <span className="text-gray-600">Non-Foil</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-yellow-50 to-yellow-100"></div>
+                    <span className="text-gray-600">Foil</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-blue-50 to-blue-100"></div>
+                    <span className="text-gray-600">Sketch-Foil</span>
+                  </div>
                 </div>
               </div>
             </div>
