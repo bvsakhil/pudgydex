@@ -198,6 +198,19 @@ export default function HuddlePage() {
     }
   };
 
+  const formatTwitterImage = (image: string) => {
+    if (image.includes("_normal")) {
+      return image.replace("_normal", "_400x400");
+    } else if (image.includes("_bigger")) {
+      return image.replace("_bigger", "_400x400");
+    } else if (image.includes("_mini")) {
+      return image.replace("_mini", "_400x400");
+    } else if (image.includes("_reasonably_small")) {
+      return image.replace("_reasonably_small", "_400x400");
+    }
+    return image;
+  };
+
   const handleTwitterLogin = async () => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -221,12 +234,13 @@ export default function HuddlePage() {
     if (error) {
       console.error("Error getting session:", error);
     }
+    console.log("data", data);
     let preferred_username =
       data?.session?.user?.user_metadata?.preferred_username;
     let email = data?.session?.user?.email;
     let twitter_image = data?.session?.user?.user_metadata?.avatar_url;
     setTwitterUsername(preferred_username ? preferred_username : email);
-    setTwitterImage(twitter_image);
+    setTwitterImage(formatTwitterImage(twitter_image));
     if (preferred_username || email) {
       setIsTwitterLogin(true);
     }
