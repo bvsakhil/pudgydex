@@ -242,16 +242,14 @@ export default function HuddlePage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-black text-center sm:text-left">
-            PudgyDex
-          </h1>
+          <img src="/pudgydex.svg" alt="PudgyDex Logo" className="text-lg font-black text-center sm:text-left" />
           <div className="flex gap-2">
             <a
               href="https://www.vibes.game/where-to-buy"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button variant="outline" className="font-medium text-sm">
+              <Button variant="secondary" className="font-medium text-sm rounded-lg bg-[#f2f2f2]">
                 Buy Vibes
               </Button>
             </a>
@@ -259,6 +257,7 @@ export default function HuddlePage() {
               chainStatus="none"
               showBalance={false}
               accountStatus="avatar"
+              label="Connect Pudgy" 
             />
           </div>
         </nav>
@@ -269,11 +268,10 @@ export default function HuddlePage() {
           <div className="flex justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
             <div className="text-left">
               <h2 className="text-xl font-bold mb-2">
-                Build your Vibes TCG Scrapebook
+                Scrapebook for your Vibes Collection
               </h2>
               <p className="text-gray-600">
-                Connect your Pengu wallet to start marking your collection
-                onchain.
+                Connect your Pudgy to start marking your collection onchain.
               </p>
             </div>
           </div>
@@ -283,7 +281,7 @@ export default function HuddlePage() {
           <div className="flex justify-center items-center h-[80vh]">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-              <p className="text-gray-600">Checking your PENGU ownership...</p>
+              <p className="text-gray-600">Verifying your PENGU ownership...</p>
             </div>
           </div>
         )}
@@ -377,7 +375,7 @@ export default function HuddlePage() {
         {/* Main Content Box */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Sticky Header */}
-          <div className="sticky top-0 bg-white border-b z-40">
+          <div className="sticky top-2 bottom-2 bg-white border-b z-40">
             {/* Tabs and Search */}
             <div className="flex flex-col">
               <div className="flex flex-wrap justify-center gap-4">
@@ -424,7 +422,7 @@ export default function HuddlePage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     className="w-full pl-10 py-2 text-sm sm:text-base placeholder:text-gray-400 border rounded-xl"
-                    placeholder="Search cards by name or ID..."
+                    placeholder="Search Card Name"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -500,7 +498,7 @@ export default function HuddlePage() {
             </div>
           ) : (
             <div className="fixed bottom-4 right-4">
-              <ConnectButton label="Connect your wallet to save your collection" />
+              <ConnectButton label="Save Collection" />
             </div>
           ))}
 
