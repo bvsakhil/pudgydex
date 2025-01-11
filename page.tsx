@@ -289,10 +289,10 @@ export default function HuddlePage() {
               </Button>
             ) : (
               <Button
-                className="font-medium text-sm bg-[#50a2d5] hover:bg-[#e2e2e2] rounded-lg"
+                className="font-medium text-sm bg-[#5989c1] hover:bg-[#5989c1] rounded-lg"
                 onClick={handleTwitterLogin}
               >
-                Login with Twitter
+                Login with X
               </Button>
             )}
           </div>
@@ -476,10 +476,10 @@ export default function HuddlePage() {
           ) : (
             <div className="fixed bottom-4 right-4">
               <Button
-                className="bg-[#1E3A8A] font-bold text-white px-4 py-2 rounded-xl flex items-center"
+                className="bg-[#5989c1] font-bold text-white px-4 py-2 rounded-xl flex items-center"
                 onClick={handleTwitterLogin}
               >
-                Login with Twitter
+                Login with X
               </Button>
             </div>
           ))}
