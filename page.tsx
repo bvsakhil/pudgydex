@@ -472,7 +472,9 @@ export default function HuddlePage() {
 
         {/* Footer */}
         <footer className="py-8 text-center text-sm text-gray-500">
-          Built by @akhil_bvs
+          <a href="https://x.com/akhil_bvs" target="_blank" rel="noopener noreferrer" className="no-underline">
+            Built by @akhil_bvs
+          </a>
         </footer>
       </div>
     </div>
