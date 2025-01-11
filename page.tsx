@@ -138,7 +138,6 @@ export default function HuddlePage() {
   }, [address]);
 
   const toggleCardCheck = (id: string, checkType: CheckType) => {
-    if (!address) return;
 
     setIsAnyCardChecked(true);
 
