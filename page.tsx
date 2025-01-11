@@ -52,11 +52,8 @@ export default function HuddlePage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  
-
-  
-
-  
+  // Check if at least one card is checked
+  const isAnyCardChecked = cards.some(card => Object.values(card.checks).some(Boolean));
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E5F0FF] to-white">
@@ -144,7 +141,7 @@ export default function HuddlePage() {
         )}
 
         {/* Main Content Box */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden sticky top-0">
           {/* Sticky Header */}
           <div className="sticky top-0 bg-white border-b z-40">
             {/* Tabs and Search */}
@@ -238,6 +235,13 @@ export default function HuddlePage() {
             </div>
           </div>
         </div>
+
+        {/* Tooltip for saving collection */}
+        {isAnyCardChecked && (
+          <div className="fixed bottom-4 right-4">
+            <ConnectButton label="Save your collection"/>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="py-8 text-center text-sm text-gray-500">
