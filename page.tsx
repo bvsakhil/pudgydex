@@ -244,21 +244,10 @@ export default function HuddlePage() {
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
           <img src="/pudgydex.svg" alt="PudgyDex Logo" className="text-lg font-black text-center sm:text-left" />
           <div className="flex gap-2">
-            <a
-              href="https://www.vibes.game/where-to-buy"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="secondary" className="font-medium text-sm rounded-lg bg-[#f2f2f2]">
-                Buy Vibes
-              </Button>
+            <a href="https://www.vibes.game/where-to-buy" target="_blank" rel="noopener noreferrer">
+              <Button variant="solid" className="font-medium text-sm bg-[#f2f2f2] rounded-lg">Buy Vibes</Button>
             </a>
-            <ConnectButton
-              chainStatus="none"
-              showBalance={false}
-              accountStatus="avatar"
-              label="Connect Pudgy" 
-            />
+            <ConnectButton chainStatus="none" accountStatus="avatar" />
           </div>
         </nav>
       </header>
@@ -375,42 +364,40 @@ export default function HuddlePage() {
         {/* Main Content Box */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Sticky Header */}
-          <div className="sticky top-2 bottom-2 bg-white border-b z-40">
+          <div className="bg-white border-b">
             {/* Tabs and Search */}
             <div className="flex flex-col">
               <div className="flex flex-wrap justify-center gap-4">
                 <button
                   className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                    activeTab === "all" ? "text-[#1E3A8A]" : "text-gray-400"
+                    activeTab === 'all' ? 'text-[#1E3A8A]' : 'text-gray-400'
                   }`}
-                  onClick={() => setActiveTab("all")}
+                  onClick={() => setActiveTab('all')}
                 >
                   All ({cards.length})
-                  {activeTab === "all" && (
+                  {activeTab === 'all' && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
                   )}
                 </button>
                 <button
                   className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                    activeTab === "collected"
-                      ? "text-[#1E3A8A]"
-                      : "text-gray-400"
+                    activeTab === 'collected' ? 'text-[#1E3A8A]' : 'text-gray-400'
                   }`}
-                  onClick={() => setActiveTab("collected")}
+                  onClick={() => setActiveTab('collected')}
                 >
                   Collected ({collectedCount})
-                  {activeTab === "collected" && (
+                  {activeTab === 'collected' && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
                   )}
                 </button>
                 <button
                   className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                    activeTab === "needed" ? "text-[#1E3A8A]" : "text-gray-400"
+                    activeTab === 'needed' ? 'text-[#1E3A8A]' : 'text-gray-400'
                   }`}
-                  onClick={() => setActiveTab("needed")}
+                  onClick={() => setActiveTab('needed')}
                 >
                   Needed ({neededCount})
-                  {activeTab === "needed" && (
+                  {activeTab === 'needed' && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
                   )}
                 </button>
@@ -429,47 +416,21 @@ export default function HuddlePage() {
                 </div>
               </div>
             </div>
-
-            {/* Card Types Legend - Simplified */}
-            <div className="px-4 py-3 flex flex-wrap items-center gap-4 text-sm border-t">
-              <span className="font-medium text-gray-600">Types:</span>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-white"></div>
-                  <span className="text-gray-600">Non-Foil</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-yellow-50 to-yellow-100"></div>
-                  <span className="text-gray-600">Foil</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-blue-50 to-blue-100"></div>
-                  <span className="text-gray-600">Sketch</span>
-                </div>
-              </div>
-            </div>
           </div>
 
+          {/* Card List */}
           <div className="p-4 sm:p-6">
             {/* Checklist */}
             <div className="space-y-1">
-              {isLoadingCards ? (
-                <div className="flex justify-center py-8">
-                  <div className="text-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-2" />
-                    <p className="text-gray-500">Loading your collection...</p>
-                  </div>
-                </div>
-              ) : activeTab === "collected" && collectedCount === 0 ? (
+              {activeTab === 'collected' && collectedCount === 0 ? (
                 <div className="text-center text-gray-500">
-                  No cards collected yet. Start marking your cards to appear
-                  here.
+                  No cards collected yet. Start marking your cards to appear here.
                 </div>
               ) : (
                 filteredCards.map((card) => (
-                  <PokemonCard
-                    key={card.id}
-                    {...card}
+                  <PokemonCard 
+                    key={card.id} 
+                    {...card} 
                     onToggle={toggleCardCheck}
                   />
                 ))
@@ -503,16 +464,8 @@ export default function HuddlePage() {
           ))}
 
         {/* Footer */}
-        <footer className="w-full py-8 text-center text-sm text-gray-500 flex justify-center">
-          Built by{" "}
-          <a
-            href="https://x.com/akhil_bvs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-1 font-semibold text-blue-600 hover:underline"
-          >
-            @akhil_bvs
-          </a>
+        <footer className="py-8 text-center text-sm text-gray-500">
+          Built by @akhil_bvs
         </footer>
       </div>
     </div>
