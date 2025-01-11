@@ -45,6 +45,7 @@ export const upsertUserCard = async (
   checkType: 'regular' | 'foil' | 'sketch',
   value: boolean
 ) => {
+  console.log("upsertUserCard", address, cardId, checkType, value);
   const { error } = await supabase
     .from('user_cards')
     .upsert(

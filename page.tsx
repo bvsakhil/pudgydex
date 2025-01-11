@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Share2, Copy, Check, ShareIcon } from "lucide-react";
+import { Search, Share2, Copy, Check, ShareIcon, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +24,11 @@ export default function HuddlePage() {
   const [nftImage, setNftImage] = useState<string | null>(null);
   const { address, isConnected } = useAccount();
   const [hasNFT, setHasNFT] = useState(false);
+  const [isLoadingNFT, setIsLoadingNFT] = useState(true);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [isAnyCardChecked, setIsAnyCardChecked] = useState(false);
+  const [toggledCards, setToggledCards] = useState<{ [key: string]: boolean }>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   interface NFTContract {
     address: string;
@@ -41,6 +46,7 @@ export default function HuddlePage() {
   useEffect(() => {
     const fetchNFTs = async () => {
       if (!address) return;
+      setIsLoadingNFT(true);
 
       try {
         const response = await fetch(
@@ -81,18 +87,23 @@ export default function HuddlePage() {
       } catch (error) {
         console.error("Error fetching NFTs:", error);
         setHasNFT(false);
+      } finally {
+        setIsLoadingNFT(false);
       }
     };
 
     if (address) {
       fetchNFTs();
+    } else {
+      setIsLoadingNFT(false);
     }
   }, [address]);
 
   // Load user's collection when they connect
   useEffect(() => {
     const loadUserCollection = async () => {
-      if (!address || !hasNFT) return;
+      if (!address) return;
+      setIsLoadingCards(true);
 
       try {
         const userCards = await getUserCards(address);
@@ -118,43 +129,39 @@ export default function HuddlePage() {
       } catch (error) {
         console.error("Error loading collection:", error);
         toast.error("Failed to load collection");
+      } finally {
+        setIsLoadingCards(false);
       }
     };
 
     loadUserCollection();
-  }, [address, hasNFT]);
+  }, [address]);
 
-  const toggleCardCheck = async (id: string, checkType: CheckType) => {
-    if (!address) return;
+  const toggleCardCheck = (id: string, checkType: CheckType) => {
+
+    setIsAnyCardChecked(true);
 
     const card = cards.find((c) => c.id === id);
     if (!card) return;
 
     const newValue = !card.checks[checkType];
-    const dbCheckType = checkType === "nonfoil" ? "regular" : checkType;
 
-    try {
-      await upsertUserCard(
-        address,
-        id,
-        dbCheckType as "regular" | "foil" | "sketch",
-        newValue
-      );
+    setCards((prevCards) =>
+      prevCards.map((card) =>
+        card.id === id
+          ? {
+              ...card,
+              checks: { ...card.checks, [checkType]: newValue },
+            }
+          : card
+      )
+    );
 
-      setCards((prevCards) =>
-        prevCards.map((card) =>
-          card.id === id
-            ? {
-                ...card,
-                checks: { ...card.checks, [checkType]: newValue },
-              }
-            : card
-        )
-      );
-    } catch (error) {
-      console.error("Error updating card:", error);
-      toast.error("Failed to update card");
-    }
+    // Update toggled cards state
+    setToggledCards((prev) => ({
+      ...prev,
+      [id]: newValue,
+    }));
   };
 
   const filteredCards = cards.filter(
@@ -180,6 +187,54 @@ export default function HuddlePage() {
     await navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveCollection = async () => {
+    if (!address) return;
+
+    setIsSaving(true); // Start loading
+
+    try {
+      // Create an array to hold promises for the upsert operations
+      const upsertPromises: Promise<any>[] = [];
+
+      // Iterate over the toggled cards
+      for (const [id, isToggled] of Object.entries(toggledCards)) {
+        const card = cards.find((c) => c.id === id);
+        if (card) {
+          console.log("card", card);
+          // Determine the check type based on the toggled state
+          const checkType = card.checks.nonfoil ? "regular" : card.checks.foil ? "foil" : "sketch";
+          console.log("checkType", checkType);
+
+          Object.keys(card.checks).forEach(key => {
+            let cardKey : "regular" | "foil" | "sketch" = key as "regular" | "foil" | "sketch";
+            if (key === "nonfoil") {
+              cardKey = "regular";
+              upsertPromises.push(upsertUserCard(address, card.id, cardKey, card.checks.nonfoil));
+            } else if (key === "foil") {
+              cardKey = "foil";
+              upsertPromises.push(upsertUserCard(address, card.id, cardKey, card.checks.foil));
+            } else if (key === "sketch") {
+              cardKey = "sketch";
+              upsertPromises.push(upsertUserCard(address, card.id, cardKey, card.checks.sketch));
+            }
+          });
+        }
+      }
+      // Wait for all upsert operations to complete
+      await Promise.all(upsertPromises);
+
+      // Reset toggled cards state
+      setToggledCards({});
+      setIsAnyCardChecked(false); // Reset checked state
+      toast.success("Collection saved successfully!");
+    } catch (error) {
+      console.error("Error saving collection:", error);
+      toast.error("Failed to save collection");
+    } finally {
+      setIsSaving(false); // Stop loading
+    }
   };
 
   return (
@@ -224,8 +279,17 @@ export default function HuddlePage() {
           </div>
         )}
 
-        {isConnected && !hasNFT && (
+        {isConnected && isLoadingNFT && (
           <div className="flex justify-center items-center h-[80vh]">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
+              <p className="text-gray-600">Checking your PENGU ownership...</p>
+            </div>
+          </div>
+        )}
+
+        {isConnected && !isLoadingNFT && !hasNFT && (
+          <div className="flex justify-center items-center h-[50vh]">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 You don't own any PENGU
@@ -311,107 +375,134 @@ export default function HuddlePage() {
         )}
 
         {/* Main Content Box */}
-        {isConnected && hasNFT && (
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            {/* Sticky Header */}
-            <div className="sticky top-0 bg-white border-b z-40">
-              {/* Tabs and Search */}
-              <div className="flex flex-col">
-                <div className="flex flex-wrap justify-center gap-4">
-                  <button
-                    className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                      activeTab === "all" ? "text-[#1E3A8A]" : "text-gray-400"
-                    }`}
-                    onClick={() => setActiveTab("all")}
-                  >
-                    All ({cards.length})
-                    {activeTab === "all" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
-                    )}
-                  </button>
-                  <button
-                    className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                      activeTab === "collected"
-                        ? "text-[#1E3A8A]"
-                        : "text-gray-400"
-                    }`}
-                    onClick={() => setActiveTab("collected")}
-                  >
-                    Collected ({collectedCount})
-                    {activeTab === "collected" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
-                    )}
-                  </button>
-                  <button
-                    className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                      activeTab === "needed"
-                        ? "text-[#1E3A8A]"
-                        : "text-gray-400"
-                    }`}
-                    onClick={() => setActiveTab("needed")}
-                  >
-                    Needed ({neededCount})
-                    {activeTab === "needed" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Search */}
-                <div className="p-4 bg-white">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <Input
-                      className="w-full pl-10 py-2 text-sm sm:text-base placeholder:text-gray-400 border rounded-xl"
-                      placeholder="Search cards by name or ID..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Sticky Header */}
+          <div className="sticky top-0 bg-white border-b z-40">
+            {/* Tabs and Search */}
+            <div className="flex flex-col">
+              <div className="flex flex-wrap justify-center gap-4">
+                <button
+                  className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
+                    activeTab === "all" ? "text-[#1E3A8A]" : "text-gray-400"
+                  }`}
+                  onClick={() => setActiveTab("all")}
+                >
+                  All ({cards.length})
+                  {activeTab === "all" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
+                  )}
+                </button>
+                <button
+                  className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
+                    activeTab === "collected"
+                      ? "text-[#1E3A8A]"
+                      : "text-gray-400"
+                  }`}
+                  onClick={() => setActiveTab("collected")}
+                >
+                  Collected ({collectedCount})
+                  {activeTab === "collected" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
+                  )}
+                </button>
+                <button
+                  className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
+                    activeTab === "needed" ? "text-[#1E3A8A]" : "text-gray-400"
+                  }`}
+                  onClick={() => setActiveTab("needed")}
+                >
+                  Needed ({neededCount})
+                  {activeTab === "needed" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
+                  )}
+                </button>
               </div>
 
-              {/* Card Types Legend - Simplified */}
-              <div className="px-4 py-3 flex flex-wrap items-center gap-4 text-sm border-t">
-                <span className="font-medium text-gray-600">Types:</span>
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 border border-gray-300 rounded-sm bg-white"></div>
-                    <span className="text-gray-600">Non-Foil</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-yellow-50 to-yellow-100"></div>
-                    <span className="text-gray-600">Foil</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-blue-50 to-blue-100"></div>
-                    <span className="text-gray-600">Sketch</span>
-                  </div>
+              {/* Search */}
+              <div className="p-4 bg-white">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    className="w-full pl-10 py-2 text-sm sm:text-base placeholder:text-gray-400 border rounded-xl"
+                    placeholder="Search cards by name or ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="p-4 sm:p-6">
-              {/* Checklist */}
-              <div className="space-y-1">
-                {activeTab === "collected" && collectedCount === 0 ? (
-                  <div className="text-center text-gray-500">
-                    No cards collected yet. Start marking your cards to appear
-                    here.
-                  </div>
-                ) : (
-                  filteredCards.map((card) => (
-                    <PokemonCard
-                      key={card.id}
-                      {...card}
-                      onToggle={toggleCardCheck}
-                    />
-                  ))
-                )}
+            {/* Card Types Legend - Simplified */}
+            <div className="px-4 py-3 flex flex-wrap items-center gap-4 text-sm border-t">
+              <span className="font-medium text-gray-600">Types:</span>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-white"></div>
+                  <span className="text-gray-600">Non-Foil</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-yellow-50 to-yellow-100"></div>
+                  <span className="text-gray-600">Foil</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 border border-gray-300 rounded-sm bg-gradient-to-br from-blue-50 to-blue-100"></div>
+                  <span className="text-gray-600">Sketch</span>
+                </div>
               </div>
             </div>
           </div>
-        )}
+
+          <div className="p-4 sm:p-6">
+            {/* Checklist */}
+            <div className="space-y-1">
+              {isLoadingCards ? (
+                <div className="flex justify-center py-8">
+                  <div className="text-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-2" />
+                    <p className="text-gray-500">Loading your collection...</p>
+                  </div>
+                </div>
+              ) : activeTab === "collected" && collectedCount === 0 ? (
+                <div className="text-center text-gray-500">
+                  No cards collected yet. Start marking your cards to appear
+                  here.
+                </div>
+              ) : (
+                filteredCards.map((card) => (
+                  <PokemonCard
+                    key={card.id}
+                    {...card}
+                    onToggle={toggleCardCheck}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {isAnyCardChecked &&
+          (isConnected ? (
+            <div className="fixed bottom-4 right-4">
+              <button
+                onClick={saveCollection}
+                className="bg-[#1E3A8A] font-bold text-white px-4 py-2 rounded-xl flex items-center"
+                disabled={isSaving} // Disable button while saving
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save your collection"
+                )}
+              </button>
+            </div>
+          ) : (
+            <div className="fixed bottom-4 right-4">
+              <ConnectButton label="Connect your wallet to save your collection" />
+            </div>
+          ))}
 
         {/* Footer */}
         <footer className="w-full py-8 text-center text-sm text-gray-500 flex justify-center">
