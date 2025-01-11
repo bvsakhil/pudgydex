@@ -1,10 +1,12 @@
-export type CheckType = 'nonfoil' | 'foil' | 'sketch'
-
 export interface Card {
-  id: string
-  name: string
+  id: string;
+  name: string;
   checks: {
-    [key in CheckType]: boolean
-  }
+    nonfoil: boolean;
+    foil: boolean;
+    sketch: boolean;
+  };
 }
+
+export type CheckType = 'nonfoil' | 'foil' | 'sketch';
 

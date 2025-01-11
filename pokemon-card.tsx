@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Card, CheckType } from './types/card'
+import { Card, CheckType } from '@/types/card'
 
 interface CardProps extends Card {
   onToggle: (id: string, checkType: CheckType) => void
