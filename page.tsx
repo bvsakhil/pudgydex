@@ -199,6 +199,9 @@ export default function HuddlePage() {
   };
 
   const formatTwitterImage = (image: string) => {
+
+    if (!image) return "";
+
     if (image.includes("_normal")) {
       return image.replace("_normal", "_400x400");
     } else if (image.includes("_bigger")) {
