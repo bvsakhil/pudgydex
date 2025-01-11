@@ -15,11 +15,24 @@ export default function PokemonCard({ id, name, checks, onToggle, imageUrl }: Ca
     { type: 'sketch' as const, className: 'bg-gradient-to-br from-blue-50 to-blue-100' }
   ]
 
+  const [rotation, setRotation] = React.useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 30; // Adjust multiplier for more/less rotation
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 30;
+    setRotation({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setRotation({ x: 0, y: 0 });
+  };
+
   return (
     <div className="group relative">
       <div className="relative flex flex-col py-3 px-4 rounded-lg transition-transform transform group-hover:scale-105">
         <div className="flex items-center gap-2 sm:gap-4 mb-2">
-          <span className="text-xs sm:text-sm text-gray-500 font-medium select-none bg-gray-200 px-2 py-1 rounded-full">
+          <span className="text-xs sm:text-sm text-gray-500 font-medium select-none bg-[#f2f2f2] px-2 py-1 rounded-full">
             #{id}
           </span>
           <span 
@@ -31,11 +44,22 @@ export default function PokemonCard({ id, name, checks, onToggle, imageUrl }: Ca
           </span>
         </div>
 
-        <div className="flex justify-center mb-2">
+        <div 
+          className="flex justify-center mb-2"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            perspective: '1000px', // Add perspective for 3D effect
+          }}
+        >
           <img 
             src={imageUrl || 'path/to/fallback/image.png'}
             alt={name} 
-            className="w-auto h-auto object-contain rounded-md" 
+            className="w-auto h-auto object-contain rounded-md"
+            style={{
+              transform: `rotateY(${rotation.x}deg) rotateX(${rotation.y}deg)`, // Apply rotation
+              transition: 'transform 0.1s ease-out', // Smooth transition
+            }}
           />
         </div>
 
