@@ -85,8 +85,8 @@ export default function HuddlePage() {
 {!isConnected && (
   <div className="flex justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
     <div className="text-left">
-      <h2 className="text-xl font-bold mb-2">Scrapebook for your Vibes TCG</h2>
-      <p className="text-gray-600">Start marking your collection onchain.</p>
+      <h2 className="text-xl font-bold mb-2">Build your Vibes TCG Scrapebook</h2>
+      <p className="text-gray-600">Connect your Pengu wallet to start marking your collection onchain.</p>
     </div>
   </div>
 )}
