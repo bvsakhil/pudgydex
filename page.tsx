@@ -8,12 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import PokemonCard from "./pokemon-card";
 import { Card, CheckType } from "./types/card";
 import { cardData } from "@/components/cards";
-import { ethers } from "ethers";
 import { toast } from "sonner";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
 import { supabase, getUserCards, upsertUserCard } from "@/lib/supabase";
-import { Analytics } from "@vercel/analytics/react"
 
 export default function HuddlePage() {
   const [cards, setCards] = useState<Card[]>(cardData);
@@ -21,15 +17,15 @@ export default function HuddlePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [copied, setCopied] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [nftImage, setNftImage] = useState<string | null>(null);
-  const { address, isConnected } = useAccount();
-  const [hasNFT, setHasNFT] = useState(false);
-  const [isLoadingNFT, setIsLoadingNFT] = useState(true);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [isAnyCardChecked, setIsAnyCardChecked] = useState(false);
-  const [toggledCards, setToggledCards] = useState<{ [key: string]: boolean }>({});
+  const [toggledCards, setToggledCards] = useState<{ [key: string]: boolean }>(
+    {}
+  );
   const [isSaving, setIsSaving] = useState(false);
+  const [isTwitterLogin, setIsTwitterLogin] = useState(false);
+  const [twitterUsername, setTwitterUsername] = useState("");
+  const [twitterImage, setTwitterImage] = useState("");
 
   interface NFTContract {
     address: string;
@@ -44,70 +40,14 @@ export default function HuddlePage() {
     image: NFTImage;
   }
 
-  useEffect(() => {
-    const fetchNFTs = async () => {
-      if (!address) return;
-      setIsLoadingNFT(true);
-
-      try {
-        const response = await fetch(
-          `https://eth-mainnet.g.alchemy.com/nft/v3/oSKPlspVUOJoF8l-8xwICsAq2R4WC0f-/getNFTsForOwner?owner=${address}&contractAddresses[]=0xbd3531da5cf5857e7cfaa92426877b022e612cf8&contractAddresses[]=0x524cab2ec69124574082676e6f654a18df49a048&withMetadata=true&pageSize=100`,
-          {
-            headers: {
-              accept: "application/json",
-            },
-          }
-        );
-
-        const data = await response.json();
-
-        if (data.ownedNfts && data.ownedNfts.length > 0) {
-          setHasNFT(true);
-          // First try to find a Pudgy Penguin NFT
-          const pudgyPenguin = data.ownedNfts.find(
-            (nft: NFT) =>
-              nft.contract.address ===
-              "0xbd3531da5cf5857e7cfaa92426877b022e612cf8"
-          );
-
-          // If no Pudgy Penguin, use Lil Pudgy
-          const lilPudgy = data.ownedNfts.find(
-            (nft: NFT) =>
-              nft.contract.address ===
-              "0x524cab2ec69124574082676e6f654a18df49a048"
-          );
-
-          if (pudgyPenguin) {
-            setNftImage(pudgyPenguin.image.cachedUrl);
-          } else if (lilPudgy) {
-            setNftImage(lilPudgy.image.cachedUrl);
-          }
-        } else {
-          setHasNFT(false);
-        }
-      } catch (error) {
-        console.error("Error fetching NFTs:", error);
-        setHasNFT(false);
-      } finally {
-        setIsLoadingNFT(false);
-      }
-    };
-
-    if (address) {
-      fetchNFTs();
-    } else {
-      setIsLoadingNFT(false);
-    }
-  }, [address]);
-
   // Load user's collection when they connect
   useEffect(() => {
     const loadUserCollection = async () => {
-      if (!address) return;
+      if (!twitterUsername) return;
       setIsLoadingCards(true);
 
       try {
-        const userCards = await getUserCards(address);
+        const userCards = await getUserCards(twitterUsername);
 
         if (userCards.length > 0) {
           setCards((prevCards) =>
@@ -136,10 +76,9 @@ export default function HuddlePage() {
     };
 
     loadUserCollection();
-  }, [address]);
+  }, [twitterUsername]);
 
   const toggleCardCheck = (id: string, checkType: CheckType) => {
-
     setIsAnyCardChecked(true);
 
     const card = cards.find((c) => c.id === id);
@@ -170,28 +109,23 @@ export default function HuddlePage() {
       card.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (activeTab === "all" ||
         (activeTab === "collected" &&
-          card.checks && Object.values(card.checks).some(Boolean)) ||
+          card.checks &&
+          Object.values(card.checks).some(Boolean)) ||
         (activeTab === "needed" &&
-          card.checks && Object.values(card.checks).some((check) => !check)))
+          card.checks &&
+          Object.values(card.checks).some((check) => !check)))
   );
 
-  const collectedCount = cards.filter((card) =>
-    card.checks && Object.values(card.checks).some(Boolean)
+  const collectedCount = cards.filter(
+    (card) => card.checks && Object.values(card.checks).some(Boolean)
   ).length;
 
-  const neededCount = cards.filter((card) =>
-    card.checks && Object.values(card.checks).some((check) => !check)
+  const neededCount = cards.filter(
+    (card) => card.checks && Object.values(card.checks).some((check) => !check)
   ).length;
-
-  const copyToClipboard = async () => {
-    if (!address) return;
-    await navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const saveCollection = async () => {
-    if (!address) return;
+    if (!twitterUsername) return;
 
     setIsSaving(true); // Start loading
 
@@ -203,22 +137,48 @@ export default function HuddlePage() {
       for (const [id, isToggled] of Object.entries(toggledCards)) {
         const card = cards.find((c) => c.id === id);
         if (card) {
-          console.log("card", card);
           // Determine the check type based on the toggled state
-          const checkType = card.checks.nonfoil ? "regular" : card.checks.foil ? "foil" : "sketch";
-          console.log("checkType", checkType);
+          const checkType = card.checks.nonfoil
+            ? "regular"
+            : card.checks.foil
+            ? "foil"
+            : "sketch";
 
-          Object.keys(card.checks).forEach(key => {
-            let cardKey : "regular" | "foil" | "sketch" = key as "regular" | "foil" | "sketch";
+          Object.keys(card.checks).forEach((key) => {
+            let cardKey: "regular" | "foil" | "sketch" = key as
+              | "regular"
+              | "foil"
+              | "sketch";
             if (key === "nonfoil") {
               cardKey = "regular";
-              upsertPromises.push(upsertUserCard(address, card.id, cardKey, card.checks.nonfoil));
+              upsertPromises.push(
+                upsertUserCard(
+                  twitterUsername,
+                  card.id,
+                  cardKey,
+                  card.checks.nonfoil
+                )
+              );
             } else if (key === "foil") {
               cardKey = "foil";
-              upsertPromises.push(upsertUserCard(address, card.id, cardKey, card.checks.foil));
+              upsertPromises.push(
+                upsertUserCard(
+                  twitterUsername,
+                  card.id,
+                  cardKey,
+                  card.checks.foil
+                )
+              );
             } else if (key === "sketch") {
               cardKey = "sketch";
-              upsertPromises.push(upsertUserCard(address, card.id, cardKey, card.checks.sketch));
+              upsertPromises.push(
+                upsertUserCard(
+                  twitterUsername,
+                  card.id,
+                  cardKey,
+                  card.checks.sketch
+                )
+              );
             }
           });
         }
@@ -238,65 +198,113 @@ export default function HuddlePage() {
     }
   };
 
+  const handleTwitterLogin = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "twitter",
+      });
+
+      if (error) {
+        throw new Error("Failed to login with Twitter");
+      }
+
+      toast.success("Logged in with Twitter!");
+    } catch (error) {
+      console.error("Error logging in with Twitter:", error);
+      setIsTwitterLogin(false);
+      toast.error("Failed to login with Twitter");
+    }
+  };
+
+  const getSession = async () => {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error("Error getting session:", error);
+    }
+    let preferred_username =
+      data?.session?.user?.user_metadata?.preferred_username;
+    let email = data?.session?.user?.email;
+    let twitter_image = data?.session?.user?.user_metadata?.avatar_url;
+    setTwitterUsername(preferred_username ? preferred_username : email);
+    setTwitterImage(twitter_image);
+    if (preferred_username || email) {
+      setIsTwitterLogin(true);
+    }
+  };
+
+  const handleTwitterLogout = async () => {
+    await supabase.auth.signOut();
+    setIsTwitterLogin(false);
+    setTwitterUsername("");
+  };
+
+  useEffect(() => {
+    getSession();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E5F0FF] to-white">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <img src="/pudgydex.svg" alt="PudgyDex Logo" className="text-lg font-black text-center sm:text-left" />
+          <img
+            src="/pudgydex.svg"
+            alt="PudgyDex Logo"
+            className="text-lg font-black text-center sm:text-left"
+          />
           <div className="flex gap-2">
-            <a href="https://www.vibes.game/where-to-buy" target="_blank" rel="noopener noreferrer">
-              <Button variant="solid" className="font-medium text-sm bg-[#f2f2f2] rounded-lg">Buy Vibes</Button>
+            <a
+              href="https://www.vibes.game/where-to-buy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="secondary"
+                className="font-medium text-sm bg-[#f2f2f2] hover:bg-[#e2e2e2] rounded-lg"
+              >
+                Buy Vibes
+              </Button>
             </a>
-            <ConnectButton chainStatus="none" accountStatus="avatar" />
+            {isTwitterLogin ? (
+              <Button
+                onClick={handleTwitterLogout}
+                variant="secondary"
+                className="font-medium text-sm bg-[#f2f2f2] rounded-lg"
+              >
+                Logout
+              </Button>
+            ) : (
+              <Button
+                className="font-medium text-sm bg-[#50a2d5] hover:bg-[#e2e2e2] rounded-lg"
+                onClick={handleTwitterLogin}
+              >
+                Login with Twitter
+              </Button>
+            )}
           </div>
         </nav>
       </header>
 
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        {!isConnected && (
-          <div className="flex justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
-            <div className="text-left">
-              <h2 className="text-xl font-bold mb-2">
-                Scrapebook for your Vibes Collection
-              </h2>
-              <p className="text-gray-600">
-                Connect your Pudgy to start marking your collection onchain.
-              </p>
-            </div>
+        <div className="flex justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
+          <div className="text-left">
+            <h2 className="text-xl font-bold mb-2">
+              Scrapebook for your Vibes Collection
+            </h2>
+            <p className="text-gray-600">
+              Collect Pudgy to start marking your collection onchain.
+            </p>
           </div>
-        )}
-
-        {isConnected && isLoadingNFT && (
-          <div className="flex justify-center items-center h-[80vh]">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-              <p className="text-gray-600">Verifying your PENGU ownership...</p>
-            </div>
-          </div>
-        )}
-
-        {isConnected && !isLoadingNFT && !hasNFT && (
-          <div className="flex justify-center items-center h-[50vh]">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                You don't own any PENGU
-              </h2>
-              <p className="text-gray-600">
-                Purchase a Pudgy Penguin or Lil Pudgy to access the dashboard.
-              </p>
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Profile - Only visible when wallet is connected AND has NFT */}
-        {isConnected && hasNFT && (
+        {isTwitterLogin && twitterUsername && (
           <div className="flex items-center justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 rounded-xl relative">
-                {nftImage && (
+                {twitterImage && (
                   <img
-                    src={nftImage}
+                    src={twitterImage}
                     alt="NFT"
                     className="absolute inset-0 w-full h-full object-cover rounded-xl"
                   />
@@ -305,34 +313,7 @@ export default function HuddlePage() {
                 <AvatarFallback>AP</AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-gray-500 font-medium">{`${address?.substring(
-                  0,
-                  4
-                )}...${address?.substring(address.length - 4)}`}</p>
-                {walletAddress && (
-                  <p className="text-gray-400 text-sm font-mono">{`${walletAddress?.substring(
-                    0,
-                    4
-                  )}...${walletAddress?.substring(
-                    walletAddress.length - 4
-                  )}`}</p>
-                )}
-                <div className="flex items-center gap-2">
-                  <p className="text-gray-400 text-sm font-mono">{address}</p>
-                  <button
-                    onClick={async () => {
-                      try {
-                        copyToClipboard();
-                        toast.success("Link copied!"); // Toast message
-                      } catch (err) {
-                        console.error("Failed to copy: ", err);
-                      }
-                    }}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
+                <p className="text-gray-500 font-medium">{`${twitterUsername}`}</p>
                 <p className="text-[#1E3A8A] font-medium text-sm mt-2">
                   Vibes Collected: {collectedCount}
                 </p>
@@ -344,7 +325,9 @@ export default function HuddlePage() {
               className="text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText("https://www.pudgydex.xyz/");
+                  await navigator.clipboard.writeText(
+                    "https://www.pudgydex.xyz/"
+                  );
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000); // Toast duration
                   toast.success("Link copied!"); // Toast message
@@ -371,34 +354,36 @@ export default function HuddlePage() {
               <div className="flex flex-wrap justify-center gap-4">
                 <button
                   className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                    activeTab === 'all' ? 'text-[#1E3A8A]' : 'text-gray-400'
+                    activeTab === "all" ? "text-[#1E3A8A]" : "text-gray-400"
                   }`}
-                  onClick={() => setActiveTab('all')}
+                  onClick={() => setActiveTab("all")}
                 >
                   All ({cards.length})
-                  {activeTab === 'all' && (
+                  {activeTab === "all" && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
                   )}
                 </button>
                 <button
                   className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                    activeTab === 'collected' ? 'text-[#1E3A8A]' : 'text-gray-400'
+                    activeTab === "collected"
+                      ? "text-[#1E3A8A]"
+                      : "text-gray-400"
                   }`}
-                  onClick={() => setActiveTab('collected')}
+                  onClick={() => setActiveTab("collected")}
                 >
                   Collected ({collectedCount})
-                  {activeTab === 'collected' && (
+                  {activeTab === "collected" && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
                   )}
                 </button>
                 <button
                   className={`px-2 sm:px-4 py-3 text-sm font-medium relative ${
-                    activeTab === 'needed' ? 'text-[#1E3A8A]' : 'text-gray-400'
+                    activeTab === "needed" ? "text-[#1E3A8A]" : "text-gray-400"
                   }`}
-                  onClick={() => setActiveTab('needed')}
+                  onClick={() => setActiveTab("needed")}
                 >
                   Needed ({neededCount})
-                  {activeTab === 'needed' && (
+                  {activeTab === "needed" && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A8A]" />
                   )}
                 </button>
@@ -419,7 +404,6 @@ export default function HuddlePage() {
 
               {/* Card Types Legend - Simplified */}
               <div className="px-6 pb-4 flex items-center gap-6 text-sm">
-                
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 border border-gray-300 rounded-sm bg-white"></div>
@@ -440,15 +424,15 @@ export default function HuddlePage() {
 
           {/* Card List */}
           <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeTab === 'collected' && collectedCount === 0 ? (
+            {activeTab === "collected" && collectedCount === 0 ? (
               <div className="text-center text-gray-500 col-span-3">
                 No cards collected yet. Start marking your cards to appear here.
               </div>
             ) : (
               filteredCards.map((card) => (
-                <PokemonCard 
-                  key={card.id} 
-                  {...card} 
+                <PokemonCard
+                  key={card.id}
+                  {...card}
                   onToggle={toggleCardCheck}
                   imageUrl={card.imageUrl}
                 />
@@ -458,7 +442,7 @@ export default function HuddlePage() {
         </div>
 
         {isAnyCardChecked &&
-          (isConnected ? (
+          (isTwitterLogin ? (
             <div className="fixed bottom-4 right-4">
               <button
                 onClick={saveCollection}
@@ -477,7 +461,12 @@ export default function HuddlePage() {
             </div>
           ) : (
             <div className="fixed bottom-4 right-4">
-              <ConnectButton label="Save Collection" />
+              <Button
+                className="bg-[#1E3A8A] font-bold text-white px-4 py-2 rounded-xl flex items-center"
+                onClick={handleTwitterLogin}
+              >
+                Login with Twitter
+              </Button>
             </div>
           ))}
 
