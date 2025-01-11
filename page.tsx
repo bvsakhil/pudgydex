@@ -170,17 +170,17 @@ export default function HuddlePage() {
       card.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (activeTab === "all" ||
         (activeTab === "collected" &&
-          Object.values(card.checks).some(Boolean)) ||
+          card.checks && Object.values(card.checks).some(Boolean)) ||
         (activeTab === "needed" &&
-          Object.values(card.checks).some((check) => !check)))
+          card.checks && Object.values(card.checks).some((check) => !check)))
   );
 
   const collectedCount = cards.filter((card) =>
-    Object.values(card.checks).some(Boolean)
+    card.checks && Object.values(card.checks).some(Boolean)
   ).length;
 
-  const neededCount = cards.filter(
-    (card) => !Object.values(card.checks).some(Boolean)
+  const neededCount = cards.filter((card) =>
+    card.checks && Object.values(card.checks).some((check) => !check)
   ).length;
 
   const copyToClipboard = async () => {
@@ -439,23 +439,21 @@ export default function HuddlePage() {
           </div>
 
           {/* Card List */}
-          <div className="p-4 sm:p-6">
-            {/* Checklist */}
-            <div className="space-y-1">
-              {activeTab === 'collected' && collectedCount === 0 ? (
-                <div className="text-center text-gray-500">
-                  No cards collected yet. Start marking your cards to appear here.
-                </div>
-              ) : (
-                filteredCards.map((card) => (
-                  <PokemonCard 
-                    key={card.id} 
-                    {...card} 
-                    onToggle={toggleCardCheck}
-                  />
-                ))
-              )}
-            </div>
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeTab === 'collected' && collectedCount === 0 ? (
+              <div className="text-center text-gray-500 col-span-3">
+                No cards collected yet. Start marking your cards to appear here.
+              </div>
+            ) : (
+              filteredCards.map((card) => (
+                <PokemonCard 
+                  key={card.id} 
+                  {...card} 
+                  onToggle={toggleCardCheck}
+                  imageUrl={card.imageUrl}
+                />
+              ))
+            )}
           </div>
         </div>
 
