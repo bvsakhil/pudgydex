@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import { supabase, getUserCards, upsertUserCard } from "@/lib/supabase";
+import { Analytics } from "@vercel/analytics/react"
 
 export default function HuddlePage() {
   const [cards, setCards] = useState<Card[]>(cardData);
@@ -343,7 +344,7 @@ export default function HuddlePage() {
               className="text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               onClick={async () => {
                 try {
-                  copyToClipboard();
+                  await navigator.clipboard.writeText("https://www.pudgydex.xyz/");
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000); // Toast duration
                   toast.success("Link copied!"); // Toast message
