@@ -303,16 +303,18 @@ export default function HuddlePage() {
       </header>
 
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        <div className="flex justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
-          <div className="text-left">
-            <h2 className="text-xl font-bold mb-2">
-              Scrapebook for your Vibes Collection
-            </h2>
-            <p className="text-gray-600">
-              Collect Pudgy to start marking your collection onchain.
-            </p>
+        {!isTwitterLogin && (
+          <div className="flex justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
+            <div className="text-left">
+              <h2 className="text-xl font-bold mb-2">
+                Scrapebook for your Vibes Collection
+              </h2>
+              <p className="text-gray-600">
+                Collect Pudgy to start marking your collection onchain.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Profile - Only visible when wallet is connected AND has NFT */}
         {isTwitterLogin && twitterUsername && (
