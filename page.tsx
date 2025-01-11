@@ -81,7 +81,19 @@ export default function HuddlePage() {
       </header>
 
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        {/* Profile */}
+
+{!isConnected && (
+  <div className="flex justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
+    <div className="text-left">
+      <h2 className="text-xl font-bold mb-2">Scrapebook for your Vibes TCG</h2>
+      <p className="text-gray-600">Start marking your collection onchain.</p>
+    </div>
+  </div>
+)}
+
+
+        {/* Profile - Only visible when wallet is connected */}
+        {isConnected && (
         <div className="flex items-center justify-between mb-4 bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 rounded-xl relative">
@@ -129,6 +141,7 @@ export default function HuddlePage() {
             {copied ? <Check className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
           </Button>
         </div>
+        )}
 
         {/* Main Content Box */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -228,7 +241,7 @@ export default function HuddlePage() {
 
         {/* Footer */}
         <footer className="py-8 text-center text-sm text-gray-500">
-          Built by @akhil_bvs
+          Built by <a href="https://x.com/akhil_bvs" target="_blank" rel="noopener noreferrer">@akhil_bvs</a>
         </footer>
       </div>
     </div>
