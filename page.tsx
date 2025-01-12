@@ -10,6 +10,14 @@ import { Card, CheckType } from "./types/card";
 import { cardData } from "@/components/cards";
 import { toast } from "sonner";
 import { supabase, getUserCards, upsertUserCard } from "@/lib/supabase";
+import posthog from 'posthog-js'
+
+posthog.init('phc_wHuq0EMrqRGENQpgUNEKaprlxctlU6S5bqbefaGHuDl',
+    {
+        api_host: 'https://us.i.posthog.com',
+        person_profiles: 'identified_only' // or 'always' to create profiles for anonymous users as well
+    }
+)
 
 export default function HuddlePage() {
   const [cards, setCards] = useState<Card[]>(cardData);
