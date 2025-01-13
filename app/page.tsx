@@ -1,38 +1,25 @@
-"use client"
+"use client";
 
-import HuddlePage from "../page"
-import '@rainbow-me/rainbowkit/styles.css';
-import {
-  getDefaultConfig,
-  RainbowKitProvider,
-} from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
-import {
-  mainnet,
-  base,
-} from 'wagmi/chains';
-import {
-  QueryClientProvider,
-  QueryClient,
-} from "@tanstack/react-query";
-
-const config = getDefaultConfig({
-  appName: 'My RainbowKit App',
-  projectId: 'YOUR_PROJECT_ID',
-  chains: [mainnet, base],
-  ssr: true, // If your dApp uses server side rendering (SSR)
-});
-
-const queryClient = new QueryClient();
+import HuddlePage from "../page";
+import { PrivyProvider } from "@privy-io/react-auth";
 
 export default function SyntheticV0PageForDeployment() {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-        <HuddlePage />
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <PrivyProvider
+      appId="cm5vh1ocm00mfw5ngvqx1l3wl"
+      config={{
+        // Customize Privy's appearance in your app
+        appearance: {
+          theme: "light",
+          accentColor: "#676FFF",
+          logo: "https://pbs.twimg.com/profile_images/1876724785264345088/W2F8RoP__400x400.jpg",
+        },
+        embeddedWallets: {
+          createOnLogin: "users-without-wallets",
+        },
+      }}
+    >
+      <HuddlePage />
+    </PrivyProvider>
   );
 }

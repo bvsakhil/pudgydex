@@ -11,6 +11,7 @@ import { cardData } from "@/components/cards";
 import { toast } from "sonner";
 import { supabase, getUserCards, upsertUserCard } from "@/lib/supabase";
 import posthog from 'posthog-js'
+import { usePrivy } from "@privy-io/react-auth";
 
 posthog.init('phc_wHuq0EMrqRGENQpgUNEKaprlxctlU6S5bqbefaGHuDl',
     {
@@ -34,6 +35,15 @@ export default function HuddlePage() {
   const [isTwitterLogin, setIsTwitterLogin] = useState(false);
   const [twitterUsername, setTwitterUsername] = useState("");
   const [twitterImage, setTwitterImage] = useState("");
+  const { user, login, logout } = usePrivy();
+
+  useEffect(() => {
+    if (user) {
+      setIsTwitterLogin(true);
+      setTwitterUsername(user.twitter?.username || "");
+      setTwitterImage(formatTwitterImage(user.twitter?.profilePictureUrl || ""));
+    }
+  }, [user])
 
   interface NFTContract {
     address: string;
@@ -222,51 +232,6 @@ export default function HuddlePage() {
     return image;
   };
 
-  const handleTwitterLogin = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "twitter",
-      });
-
-      if (error) {
-        throw new Error("Failed to login with Twitter");
-      }
-
-      toast.success("Logged in with Twitter!");
-    } catch (error) {
-      console.error("Error logging in with Twitter:", error);
-      setIsTwitterLogin(false);
-      toast.error("Failed to login with Twitter");
-    }
-  };
-
-  const getSession = async () => {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error("Error getting session:", error);
-    }
-    console.log("data", data);
-    let preferred_username =
-      data?.session?.user?.user_metadata?.preferred_username;
-    let email = data?.session?.user?.email;
-    let twitter_image = data?.session?.user?.user_metadata?.avatar_url;
-    setTwitterUsername(preferred_username ? preferred_username : email);
-    setTwitterImage(formatTwitterImage(twitter_image));
-    if (preferred_username || email) {
-      setIsTwitterLogin(true);
-    }
-  };
-
-  const handleTwitterLogout = async () => {
-    await supabase.auth.signOut();
-    setIsTwitterLogin(false);
-    setTwitterUsername("");
-  };
-
-  useEffect(() => {
-    getSession();
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E5F0FF] to-white">
       {/* Header */}
@@ -292,7 +257,12 @@ export default function HuddlePage() {
             </a>
             {isTwitterLogin ? (
               <Button
-                onClick={handleTwitterLogout}
+                onClick={() => {
+                  logout();
+                  setIsTwitterLogin(false);
+                  setTwitterUsername("");
+                  setTwitterImage("");
+                }}
                 variant="secondary"
                 className="font-medium text-sm bg-[#f2f2f2] rounded-lg"
               >
@@ -301,7 +271,7 @@ export default function HuddlePage() {
             ) : (
               <Button
                 className="font-medium text-sm bg-[#5989c1] hover:bg-[#5989c1] rounded-lg"
-                onClick={handleTwitterLogin}
+                onClick={login}
               >
                 Login with X
               </Button>
@@ -490,7 +460,7 @@ export default function HuddlePage() {
             <div className="fixed bottom-4 right-4">
               <Button
                 className="bg-[#5989c1] font-bold text-white px-4 py-2 rounded-xl flex items-center"
-                onClick={handleTwitterLogin}
+                onClick={login}
               >
                 Login with X
               </Button>
