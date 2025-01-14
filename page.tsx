@@ -462,7 +462,7 @@ export default function HuddlePage() {
                 className="bg-[#5989c1] font-bold text-white px-4 py-2 rounded-xl flex items-center"
                 onClick={login}
               >
-                Login with X
+                Save your Collection
               </Button>
             </div>
           ))}
